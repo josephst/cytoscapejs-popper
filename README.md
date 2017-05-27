@@ -9,8 +9,8 @@ Display popups on graph elements using Popper.js
 
 ## Dependencies
 
- * Cytoscape.js ^x.y.z
- * <List your dependencies here please>
+ * Cytoscape.js ^3.0.0
+ * Popper.js ^1.9.0
 
 
 ## Usage instructions
