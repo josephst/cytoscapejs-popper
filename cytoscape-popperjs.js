@@ -9,37 +9,33 @@
       return;
     } // can't register if cytoscape unspecified
 
-    cytoscape('core', 'popperjs', function () {
-      var cy = this;
+    function updatePosition(ele, popper, evt) {
+      // can be called on core graph or collections of elements
+      var isCy = (ele != null && typeof ele == 'function');
+      var isEle = !isCy;
+      var isNode = isEle && ele.isNode();
+      var cy = isCy ? ele : ele.cy();
+      var parentContainerSize = cy.container().getBoundingClientRect();
+      var pos = isNode ? ele.renderedPos() :
+        (event ? event.renderedPosition || event.cyRenderedPos : undefined);
 
-      // your extension impl...
-      function updatePosition(ele, evt) {
-        var isCy = (ele != null && typeof ele == 'function');
-        var isEle = !isCy;
-        var isNode = isEle && ele.isNode();
-        var cy = isCy ? ele : ele.cy();
-        var parentContainerSize = cy.container().getBoundingClientRect();
-        var pos = isNode ? ele.renderedPos() :
-          (event ? event.renderedPosition || event.cyRenderedPos : undefined);
+      // sanity check for found position
+      if (!pos || pos.x == null || isNaN(pos.x)) {
+        return;
+      }
 
-        // sanity check for found position
-        if (!pos || pos.x == null || isNaN(pos.x)) {
-          return;
-        }
-
-        var boundingBox = isNode ? ele.renderedBoundingBox({
-          includeNodes: true,
-          includeEdges: false,
-          includeLabels: false,
-          includeShadows: false
-        }) : {
-          x1: pos.x - 1,
-          x2: pos.x + 1,
-          w: 3,
-          y1: pos.y - 1,
-          y2: pos.y + 1,
-          h: 3
-        }
+      var boundingBox = isNode ? ele.renderedBoundingBox({
+        includeNodes: true,
+        includeEdges: false,
+        includeLabels: false,
+        includeShadows: false
+      }) : {
+        x1: pos.x - 1,
+        x2: pos.x + 1,
+        w: 3,
+        y1: pos.y - 1,
+        y2: pos.y + 1,
+        h: 3
       }
 
       // reference object for Popper.js
@@ -57,6 +53,27 @@
         clientWidth: boundingBox.x2 - boundingBox.x1,
         clientHeight: boundingBox.y2 - boundingBox.y1
       };
+    }
+
+
+    cytoscape('core', 'popperjs', function (passedOpts) {
+      // for use on core   
+      var cy = this;
+      var container = cy.container();
+
+      var scratch = cy.scratch()
+      var popper = scratch.popper = scratch.popper || {};
+      var opts = passedOpts; // TODO: custom options specific to Cytoscape.js?
+
+      cy.on(opts.show.event, function (event) {
+        updatePosition(cy, popper, event);
+      });
+
+      return this; // chainability
+    });
+
+    cytoscape('collection', 'popperjs', function (passedOpts) {
+      // for use on elements
 
       return this; // chainability
     });
