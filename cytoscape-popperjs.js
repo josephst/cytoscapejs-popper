@@ -9,71 +9,66 @@
       return;
     } // can't register if cytoscape unspecified
 
+    function generateOptions(target, passedOpts) {
+      var popper = target.scratch().popper;
+      var opts = Object.assign({}, passedOpts); // TODO: polyfill?
+
+      if (!opts.id) {
+        opts.id = 'cy-qtip-target-' + (Date.now() + Math.round(Math.random() * 10000));
+      }
+
+      var referenceObject = {} // TODO: reference object for Popper.js, used instead of qtip's position props
+
+      // adjust
+      // TODO: ??
+
+      // default show event
+      opts.show = opts.show || {};
+      if (opts.show.event === undefined) {
+        opts.show.event = 'tap';
+      }
+
+      // default hide event
+      opts.hide = opts.hide || {};
+      opts.hide.cyViewport = opts.hide.cyViewport === undefined ? true : opts.hide.cyViewport;
+      if (opts.hide.event === undefined) {
+        opts.hide.event = 'unfocus';
+      }
+
+      // content
+      // TODO: content
+
+      return opts
+    }
+
     function updatePosition(ele, popper, evt) {
-      // can be called on core graph or collections of elements
-      var isCy = (ele != null && typeof ele == 'function');
-      var isEle = !isCy;
-      var isNode = isEle && ele.isNode();
-      var cy = isCy ? ele : ele.cy();
-      var parentContainerSize = cy.container().getBoundingClientRect();
-      var pos = isNode ? ele.renderedPos() :
-        (event ? event.renderedPosition || event.cyRenderedPos : undefined);
-
-      // sanity check for found position
-      if (!pos || pos.x == null || isNaN(pos.x)) {
-        return;
-      }
-
-      var boundingBox = isNode ? ele.renderedBoundingBox({
-        includeNodes: true,
-        includeEdges: false,
-        includeLabels: false,
-        includeShadows: false
-      }) : {
-        x1: pos.x - 1,
-        x2: pos.x + 1,
-        w: 3,
-        y1: pos.y - 1,
-        y2: pos.y + 1,
-        h: 3
-      }
-
-      // reference object for Popper.js
-      var referenceObject = {
-        getBoundingClientRect() {
-          return {
-            top: boundingBox.y1,
-            left: boundingBox.x1,
-            right: boundingBox.x2,
-            bottom: boundingBox.y2,
-            width: boundingBox.x2 - boundingBox.x1,
-            height: boundingBox.y2 - boundingBox.y1
-          };
-        },
-        clientWidth: boundingBox.x2 - boundingBox.x1,
-        clientHeight: boundingBox.y2 - boundingBox.y1
-      };
+      console.log('update')
     }
 
 
     cytoscape('core', 'popperjs', function (passedOpts) {
       // for use on core   
-      var cy = this;
-      var container = cy.container();
-
-      var scratch = cy.scratch()
-      var popper = scratch.popper = scratch.popper || {};
-      var opts = passedOpts; // TODO: custom options specific to Cytoscape.js?
-
-      cy.on(opts.show.event, function (event) {
-        updatePosition(cy, popper, event);
-      });
 
       return this; // chainability
     });
 
     cytoscape('collection', 'popperjs', function (passedOpts) {
       // for use on elements
+      var eles = this;
+      var cy = this.cy()
+      var container = cy.container()
+
+      eles.each(function(ele, i) {
+        var scratch = ele.scratch();
+        var popper = scratch.popper = scratch.popper || {};
+        var opts = generateOptions(ele, passedOpts); // TODO: custom options?
+
+        updatePosition(ele, popper);
+
+        ele.on(opts.show.event, function(e) {
+          updatePosition(ele, popper, e);
+        });
+      });
 
       return this; // chainability
     });
