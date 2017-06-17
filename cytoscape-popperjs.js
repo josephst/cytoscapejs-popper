@@ -1,3 +1,4 @@
+// @ts-check
 ;
 (function () {
   'use strict';
@@ -17,7 +18,14 @@
         opts.id = 'cy-qtip-target-' + (Date.now() + Math.round(Math.random() * 10000));
       }
 
-      var referenceObject = {} // TODO: reference object for Popper.js, used instead of qtip's position props
+      var targetBox = target.boundingBox();
+      opts.referenceObject = {
+        getBoundingClientRect() {
+          return {
+            // TODO: return Cytoscape's dimensions here; also implement clientWidth and clientHeight
+          }
+        }
+      }
 
       // adjust
       // TODO: ??
@@ -42,7 +50,8 @@
     }
 
     function updatePosition(ele, popper, evt) {
-      console.log('update')
+      console.log('update');
+      const popElement = new Popper(document.getElementById("cy"), document.getElementById("pop"));
     }
 
 
@@ -63,10 +72,10 @@
         var popper = scratch.popper = scratch.popper || {};
         var opts = generateOptions(ele, passedOpts); // TODO: custom options?
 
-        updatePosition(ele, popper);
+        updatePosition(opts.referenceObject, popper);
 
         ele.on(opts.show.event, function(e) {
-          updatePosition(ele, popper, e);
+          updatePosition(opts.referenceObject, popper, e);
         });
       });
 
