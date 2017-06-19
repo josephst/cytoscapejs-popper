@@ -15,16 +15,7 @@
       var opts = Object.assign({}, passedOpts); // TODO: polyfill?
 
       if (!opts.id) {
-        opts.id = 'cy-qtip-target-' + (Date.now() + Math.round(Math.random() * 10000));
-      }
-
-      var targetBox = target.boundingBox();
-      opts.referenceObject = {
-        getBoundingClientRect() {
-          return {
-            // TODO: return Cytoscape's dimensions here; also implement clientWidth and clientHeight
-          }
-        }
+        opts.id = 'cy-popper-target-' + (Date.now() + Math.round(Math.random() * 10000));
       }
 
       // adjust
@@ -50,32 +41,87 @@
     }
 
     function updatePosition(ele, popper, evt) {
-      console.log('update');
-      const popElement = new Popper(document.getElementById("cy"), document.getElementById("pop"));
+      var e = evt;
+      var isCy = ele.pan !== undefined && typeof ele.pan === 'function';
+      var isEle = !isCy;
+      var isNode = isEle && ele.isNode();
+      var cy = isCy ? ele : ele.cy();
+      var cyOffset = cy.container().getBoundingClientRect();
+      var pos = isNode ? ele.renderedPosition() : (e ? e.renderedPosition || e.cyRenderedPosition : undefined);
+      if (!pos || pos.x === null || isNaN(pos.x)) {
+        return;
+      }
+
+      var bb = isNode ? ele.renderedBoundingBox({
+        includeNodes: true,
+        includeEdges: false,
+        includeLabels: false,
+        includeShadows: false,
+      }) : {
+        x1: pos.x - 1,
+        x2: pos.x + 1,
+        w: 3,
+        y1: pos.y - 1,
+        y2: pos.y + 1,
+        h: 3,
+      };
+
+      var refObject = {
+        getBoundingClientRect() {
+          // TODO: return Cytoscape's dimensions here; also implement clientWidth and clientHeight
+          return {
+            top: bb.y1,
+            left: bb.x1,
+            right: bb.x2,
+            bottom: bb.y2,
+            width: bb.w,
+            height: bb.h,
+          };
+        },
+        clientWidth: bb.w,
+        clientHeight: bb.h,
+      }
+      var scratch = ele.scratch();
+      var popElement;
+      if (scratch.popper) {
+        popElement = scratch.popper
+        scratch.popper.scheduleUpdate();
+        // TODO: update position
+      } else {
+        popElement = new Popper(refObject, document.getElementById("pop"));
+      }
+      return popElement;
     }
 
 
-    cytoscape('core', 'popperjs', function (passedOpts) {
+    cytoscape('core', 'popperjs', function(passedOpts) {
       // for use on core   
 
       return this; // chainability
     });
 
-    cytoscape('collection', 'popperjs', function (passedOpts) {
+    cytoscape('collection', 'popperjs', function(passedOpts) {
       // for use on elements
       var eles = this;
       var cy = this.cy()
       var container = cy.container()
 
-      eles.each(function(ele, i) {
+      eles.each(function (ele, i) {
         var scratch = ele.scratch();
-        var popper = scratch.popper = scratch.popper || {};
         var opts = generateOptions(ele, passedOpts); // TODO: custom options?
-
-        updatePosition(opts.referenceObject, popper);
+        var popper = scratch.popper = updatePosition(ele, popper);
 
         ele.on(opts.show.event, function(e) {
-          updatePosition(opts.referenceObject, popper, e);
+          updatePosition(ele, popper, e);
+        });
+        ele.on(opts.hide.event, function(e) {
+          // TODO: hide element
+          console.log('hidden');
+        });
+
+        cy.on('pan zoom', function(e) {
+          console.log('updating position');
+          updatePosition(ele, popper, e);
         });
       });
 
