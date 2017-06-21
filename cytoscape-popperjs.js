@@ -52,6 +52,7 @@
         includeNodes: true,
         includeEdges: false,
         includeLabels: false,
+        includeOverlays: false,        
       }) : {
         x1: pos.x - 1,
         x2: pos.x + 1,
