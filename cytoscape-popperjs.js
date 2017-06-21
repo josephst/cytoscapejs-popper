@@ -52,7 +52,6 @@
         includeNodes: true,
         includeEdges: false,
         includeLabels: false,
-        includeShadows: false,
       }) : {
         x1: pos.x - 1,
         x2: pos.x + 1,
@@ -64,12 +63,11 @@
 
       var refObject = {
         getBoundingClientRect() {
-          // TODO: return Cytoscape's dimensions here; also implement clientWidth and clientHeight
           return {
-            top: bb.y1,
-            left: bb.x1,
-            right: bb.x2,
-            bottom: bb.y2,
+            top: bb.y1 + cyOffset.top + window.pageYOffset,
+            left: bb.x1 + cyOffset.left + window.pageXOffset,
+            right: bb.x2 + cyOffset.left + window.pageXOffset,
+            bottom: bb.y2 + cyOffset.top + window.pageYOffset,
             width: bb.w,
             height: bb.h,
           };
@@ -81,7 +79,6 @@
         var popper = ele.scratch('popper');
         popper.reference = refObject;
         popper.scheduleUpdate();
-        // TODO: update position
       } else {
         var popper = new Popper(refObject, document.getElementById('pop'));
         var scratch = ele.scratch('popper', popper);        
@@ -105,16 +102,19 @@
         var opts = generateOptions(ele, passedOpts); // TODO: custom options?
         updatePosition(ele, null);
 
+        ele.on('position', function(e) {
+          updatePosition(ele, e);
+        });
+
         ele.on(opts.show.event, function(e) {
           updatePosition(ele, e);
         });
         ele.on(opts.hide.event, function(e) {
           // TODO: hide element
-          console.log('hidden');
+          console.log('should be hidden');
         });
 
         cy.on('pan zoom', function(e) {
-          console.log('updating position');
           updatePosition(ele, e);
         });
       });
