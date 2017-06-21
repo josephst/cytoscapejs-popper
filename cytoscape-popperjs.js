@@ -34,20 +34,16 @@
         opts.hide.event = 'unfocus';
       }
 
-      // content
-      // TODO: content
-
       return opts
     }
 
-    function updatePosition(ele, popper, evt) {
-      var e = evt;
+    function updatePosition(ele, evt) {
       var isCy = ele.pan !== undefined && typeof ele.pan === 'function';
       var isEle = !isCy;
       var isNode = isEle && ele.isNode();
       var cy = isCy ? ele : ele.cy();
       var cyOffset = cy.container().getBoundingClientRect();
-      var pos = isNode ? ele.renderedPosition() : (e ? e.renderedPosition || e.cyRenderedPosition : undefined);
+      var pos = isNode ? ele.renderedPosition() : (evt ? evt.renderedPosition || evt.cyRenderedPosition : undefined);
       if (!pos || pos.x === null || isNaN(pos.x)) {
         return;
       }
@@ -81,16 +77,15 @@
         clientWidth: bb.w,
         clientHeight: bb.h,
       }
-      var scratch = ele.scratch();
-      var popElement;
-      if (scratch.popper) {
-        popElement = scratch.popper
-        scratch.popper.scheduleUpdate();
+      if (ele.scratch('popper')) {
+        var popper = ele.scratch('popper');
+        popper.reference = refObject;
+        popper.scheduleUpdate();
         // TODO: update position
       } else {
-        popElement = new Popper(refObject, document.getElementById("pop"));
+        var popper = new Popper(refObject, document.getElementById('pop'));
+        var scratch = ele.scratch('popper', popper);        
       }
-      return popElement;
     }
 
 
@@ -107,12 +102,11 @@
       var container = cy.container()
 
       eles.each(function (ele, i) {
-        var scratch = ele.scratch();
         var opts = generateOptions(ele, passedOpts); // TODO: custom options?
-        var popper = scratch.popper = updatePosition(ele, popper);
+        updatePosition(ele, null);
 
         ele.on(opts.show.event, function(e) {
-          updatePosition(ele, popper, e);
+          updatePosition(ele, e);
         });
         ele.on(opts.hide.event, function(e) {
           // TODO: hide element
@@ -121,7 +115,7 @@
 
         cy.on('pan zoom', function(e) {
           console.log('updating position');
-          updatePosition(ele, popper, e);
+          updatePosition(ele, e);
         });
       });
 
