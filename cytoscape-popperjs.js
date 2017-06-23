@@ -42,58 +42,62 @@
       var isEle = !isCy;
       var isNode = isEle && ele.isNode();
       var cy = isCy ? ele : ele.cy();
-      var cyOffset = cy.container().getBoundingClientRect();
-      var pos = isNode ? ele.renderedPosition() : (evt ? evt.renderedPosition || evt.cyRenderedPosition : undefined);
-      if (!pos || pos.x === null || isNaN(pos.x)) {
-        return;
-      }
 
-      var bb = isNode ? ele.renderedBoundingBox({
-        includeNodes: true,
-        includeEdges: false,
-        includeLabels: false,
-        includeOverlays: false,        
-      }) : {
-        x1: pos.x - 1,
-        x2: pos.x + 1,
-        w: 3,
-        y1: pos.y - 1,
-        y2: pos.y + 1,
-        h: 3,
-      };
-
-      var refObject = {
-        getBoundingClientRect() {
-          return {
-            top: bb.y1 + cyOffset.top + window.pageYOffset,
-            left: bb.x1 + cyOffset.left + window.pageXOffset,
-            right: bb.x2 + cyOffset.left + window.pageXOffset,
-            bottom: bb.y2 + cyOffset.top + window.pageYOffset,
-            width: bb.w,
-            height: bb.h,
-          };
-        },
-        clientWidth: bb.w,
-        clientHeight: bb.h,
-      }
       if (ele.scratch('popper')) {
+        // Popper has already been created
         var popper = ele.scratch('popper');
-        popper.reference = refObject;
         popper.scheduleUpdate();
       } else {
+        // need to create a new Popper
+        var dim = isNode ? {
+          get w() {
+            return ele.renderedOuterWidth();
+          },
+          get h() {
+            return ele.renderedOuterHeight();
+          }
+        } : {
+          w: 3,
+          h: 3,
+        };
+
+        var refObject = {
+          getBoundingClientRect: function () {
+            var pos = isNode ? ele.renderedPosition() : (evt ? evt.renderedPosition || evt.cyRenderedPosition : undefined);
+            var cyOffset = cy.container().getBoundingClientRect();
+            if (!pos || pos.x === null || isNaN(pos.x)) {
+              return;
+            }
+            return {
+              top: pos.y + cyOffset.top + window.pageYOffset,
+              left: pos.x + cyOffset.left + window.pageXOffset,
+              right: pos.x + dim.w + cyOffset.left + window.pageXOffset,
+              bottom: pos.y + dim.h + cyOffset.top + window.pageYOffset,
+              width: dim.w,
+              height: dim.h,
+            };
+          },
+          get clientWidth() {
+            return dim.w
+          },
+          get clientHeight() {
+            return dim.h
+          },
+        }
         var popper = new Popper(refObject, document.getElementById('pop'));
-        var scratch = ele.scratch('popper', popper);        
+        var scratch = ele.scratch('popper', popper);
       }
     }
 
 
-    cytoscape('core', 'popperjs', function(passedOpts) {
-      // for use on core   
+    cytoscape('core', 'popperjs', function (passedOpts) {
+      // for use on core
+      // TODO
 
       return this; // chainability
     });
 
-    cytoscape('collection', 'popperjs', function(passedOpts) {
+    cytoscape('collection', 'popperjs', function (passedOpts) {
       // for use on elements
       var eles = this;
       var cy = this.cy()
@@ -103,19 +107,19 @@
         var opts = generateOptions(ele, passedOpts); // TODO: custom options?
         updatePosition(ele, null);
 
-        ele.on('position', function(e) {
+        ele.on('position', function (e) {
           updatePosition(ele, e);
         });
 
-        ele.on(opts.show.event, function(e) {
+        ele.on(opts.show.event, function (e) {
           updatePosition(ele, e);
         });
-        ele.on(opts.hide.event, function(e) {
+        ele.on(opts.hide.event, function (e) {
           // TODO: hide element
           console.log('should be hidden');
         });
 
-        cy.on('pan zoom', function(e) {
+        cy.on('pan zoom', function (e) {
           updatePosition(ele, e);
         });
       });
