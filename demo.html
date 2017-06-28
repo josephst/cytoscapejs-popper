@@ -155,7 +155,11 @@
 
 			// demo your core ext
 			cy.popperjs({});
-			cy.nodes()[0].popperjs({});
+			cy.nodes()[0].popperjs({
+				popper: {
+					placement: "left"
+				}
+			});
 
 		});
 	</script>

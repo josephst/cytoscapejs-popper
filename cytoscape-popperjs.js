@@ -10,16 +10,12 @@
       return;
     } // can't register if cytoscape unspecified
 
-    function generateOptions(target, passedOpts) {
-      var popper = target.scratch().popper;
+    function generateOptions(passedOpts) {
       var opts = Object.assign({}, passedOpts); // TODO: polyfill?
 
       if (!opts.id) {
         opts.id = 'cy-popper-target-' + (Date.now() + Math.round(Math.random() * 10000));
       }
-
-      // adjust
-      // TODO: ??
 
       // default show event
       opts.show = opts.show || {};
@@ -84,8 +80,9 @@
             return dim.h
           },
         }
-        var popper = new Popper(refObject, document.getElementById('pop'));
-        var scratch = ele.scratch('popper', popper);
+        var popperOpts = ele.scratch('popper-opts');
+        var popper = new Popper(refObject, document.getElementById('pop'), popperOpts);
+        ele.scratch('popper', popper);
       }
     }
 
@@ -104,7 +101,8 @@
       var container = cy.container()
 
       eles.each(function (ele, i) {
-        var opts = generateOptions(ele, passedOpts); // TODO: custom options?
+        var opts = generateOptions(passedOpts); // TODO: custom options?
+        ele.scratch('popper-opts', opts.popper);
         updatePosition(ele, null);
 
         ele.on('position', function (e) {
@@ -112,9 +110,10 @@
         });
 
         ele.on(opts.show.event, function (e) {
+          console.log('should be visible');
           updatePosition(ele, e);
         });
-        ele.on(opts.hide.event, function (e) {
+        ele.on('unfocus', function (e) {
           // TODO: hide element
           console.log('should be hidden');
         });
