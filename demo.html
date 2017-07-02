@@ -154,9 +154,14 @@
 			});
 
 			// demo your core ext
-			cy.popperjs({});
+			cy.popperjs({
+				target: 'core-popper',
+				popper: {
+					placement: "top",
+				}
+			});
 			cy.nodes()[0].popperjs({
-				target: function() { return 'pop' },
+				target: function(ele) { return 'popper-' + ele.id() },
 				popper: {
 					placement: "bottom"
 				}
@@ -170,7 +175,8 @@
 	<h1>cytoscape-popperjs demo</h1>
 
 	<div id="cy"></div>
-	<div class="popper" id="pop">Hello, world!</div>
+	<div class="popper" id="popper-j">Element</div>
+	<div class="popper" id="core-popper">Core</div>
 
 </body>
 

@@ -92,7 +92,17 @@
 
     cytoscape('core', 'popperjs', function (passedOpts) {
       // for use on core
-      // TODO
+      var cy = this;
+      var container = cy.container();
+
+      var opts = generateOptions(passedOpts);
+      cy.scratch('popper-opts', opts.popper);
+      cy.scratch('popper-target', opts.target);
+      updatePosition(cy, null);
+
+      cy.on('pan zoom resize', function (e) {
+        updatePosition(cy, e);
+      });
 
       return this; // chainability
     });
@@ -112,7 +122,6 @@
         ele.on('position', function (e) {
           updatePosition(ele, e);
         });
-
         cy.on('pan zoom', function (e) {
           updatePosition(ele, e);
         });
