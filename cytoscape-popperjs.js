@@ -68,7 +68,23 @@
           },
         }
         var popperOpts = ele.scratch('popper-opts');
-        var popper = new Popper(refObject, document.getElementById('pop'), popperOpts);
+        var targetOpt = ele.scratch('popper-target');
+        var target = null;
+        if (!targetOpt) {
+          return;
+        } else {
+          if (typeof targetOpt === 'function') {
+            target = document.getElementById(targetOpt(ele));
+          } else if (typeof targetOpt === 'string') {
+            target = document.getElementById(targetOpt.substr(1));
+            if (target === null) {
+              return;
+            }
+          } else {
+            return;
+          }
+        }
+        var popper = new Popper(refObject, target, popperOpts);
         ele.scratch('popper', popper);
       }
     }
@@ -90,6 +106,7 @@
       eles.each(function (ele, i) {
         var opts = generateOptions(passedOpts); // TODO: custom options?
         ele.scratch('popper-opts', opts.popper);
+        ele.scratch('popper-target', opts.target);
         updatePosition(ele, null);
 
         ele.on('position', function (e) {

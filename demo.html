@@ -156,6 +156,7 @@
 			// demo your core ext
 			cy.popperjs({});
 			cy.nodes()[0].popperjs({
+				target: function() { return 'pop' },
 				popper: {
 					placement: "bottom"
 				}
