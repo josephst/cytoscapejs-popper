@@ -17,34 +17,21 @@
         opts.id = 'cy-popper-target-' + (Date.now() + Math.round(Math.random() * 10000));
       }
 
-      // default show event
-      opts.show = opts.show || {};
-      if (opts.show.event === undefined) {
-        opts.show.event = 'tap';
-      }
-
-      // default hide event
-      opts.hide = opts.hide || {};
-      opts.hide.cyViewport = opts.hide.cyViewport === undefined ? true : opts.hide.cyViewport;
-      if (opts.hide.event === undefined) {
-        opts.hide.event = 'unfocus';
-      }
-
       return opts
     }
 
     function updatePosition(ele, evt) {
-      var isCy = ele.pan !== undefined && typeof ele.pan === 'function';
-      var isEle = !isCy;
-      var isNode = isEle && ele.isNode();
-      var cy = isCy ? ele : ele.cy();
-
       if (ele.scratch('popper')) {
         // Popper has already been created
         var popper = ele.scratch('popper');
         popper.scheduleUpdate();
       } else {
         // need to create a new Popper
+        var isCy = ele.pan !== undefined && typeof ele.pan === 'function';
+        var isEle = !isCy;
+        var isNode = isEle && ele.isNode();
+        var cy = isCy ? ele : ele.cy();
+
         var dim = isNode ? {
           get w() {
             return ele.renderedOuterWidth();
@@ -107,15 +94,6 @@
 
         ele.on('position', function (e) {
           updatePosition(ele, e);
-        });
-
-        ele.on(opts.show.event, function (e) {
-          console.log('should be visible');
-          updatePosition(ele, e);
-        });
-        ele.on('unfocus', function (e) {
-          // TODO: hide element
-          console.log('should be hidden');
         });
 
         cy.on('pan zoom', function (e) {
