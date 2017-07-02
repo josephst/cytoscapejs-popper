@@ -11,7 +11,7 @@
     } // can't register if cytoscape unspecified
 
     function generateOptions(passedOpts) {
-      var opts = Object.assign({}, passedOpts); // TODO: polyfill?
+      var opts = Object.assign({}, passedOpts);
 
       if (!opts.id) {
         opts.id = 'cy-popper-target-' + (Date.now() + Math.round(Math.random() * 10000));
@@ -68,6 +68,7 @@
           },
         }
         var popperOpts = ele.scratch('popper-opts');
+        popperOpts.placement = popperOpts.placement || 'bottom';
         var targetOpt = ele.scratch('popper-target');
         var target = null;
         if (!targetOpt) {
@@ -114,7 +115,7 @@
       var container = cy.container()
 
       eles.each(function (ele, i) {
-        var opts = generateOptions(passedOpts); // TODO: custom options?
+        var opts = generateOptions(passedOpts);
         ele.scratch('popper-opts', opts.popper);
         ele.scratch('popper-target', opts.target);
         updatePosition(ele, null);
