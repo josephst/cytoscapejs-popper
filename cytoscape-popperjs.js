@@ -16,15 +16,15 @@
       if (!opts.id) {
         opts.id = 'cy-popper-target-' + (Date.now() + Math.round(Math.random() * 10000));
       }
-
       return opts
     }
 
-    function updatePosition(ele, evt) {
+    function createPopper(ele) {
       if (ele.scratch('popper')) {
         // Popper has already been created
         var popper = ele.scratch('popper');
         popper.scheduleUpdate();
+        return popper;
       } else {
         // need to create a new Popper
         var isCy = ele.pan !== undefined && typeof ele.pan === 'function';
@@ -46,7 +46,7 @@
 
         var refObject = {
           getBoundingClientRect: function () {
-            var pos = isNode ? ele.renderedPosition() : (evt ? evt.renderedPosition || evt.cyRenderedPosition : undefined);
+            var pos = isNode ? ele.renderedPosition() : undefined;
             var cyOffset = cy.container().getBoundingClientRect();
             if (!pos || pos.x === null || isNaN(pos.x)) {
               return;
@@ -86,7 +86,7 @@
           }
         }
         var popper = new Popper(refObject, target, popperOpts);
-        ele.scratch('popper', popper);
+        return popper;
       }
     }
 
@@ -99,11 +99,8 @@
       var opts = generateOptions(passedOpts);
       cy.scratch('popper-opts', opts.popper);
       cy.scratch('popper-target', opts.target);
-      updatePosition(cy, null);
-
-      cy.on('pan zoom resize', function (e) {
-        updatePosition(cy, e);
-      });
+      var popper = createPopper(cy);
+      cy.scratch('popper', popper);
 
       return this; // chainability
     });
@@ -116,16 +113,10 @@
 
       eles.each(function (ele, i) {
         var opts = generateOptions(passedOpts);
-        ele.scratch('popper-opts', opts.popper);
+        ele.scratch('popper-opts', opts.popper || {});
         ele.scratch('popper-target', opts.target);
-        updatePosition(ele, null);
-
-        ele.on('position', function (e) {
-          updatePosition(ele, e);
-        });
-        cy.on('pan zoom', function (e) {
-          updatePosition(ele, e);
-        });
+        var popper = createPopper(ele);
+        ele.scratch('popper', popper);
       });
 
       return this; // chainability
